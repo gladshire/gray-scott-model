@@ -88,7 +88,7 @@ if __name__ == "__main__":
     killRate = 0.062
     timeStep = 1
 
-    sys = gsSystem("Untitled.png", diffRateU, diffRateV, feedRate, killRate, timeStep)
+    sys = gsSystem("sample.png", diffRateU, diffRateV, feedRate, killRate, timeStep)
     sys.runSim(10000)
 
     sys.renderMovie()
