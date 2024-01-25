@@ -22,8 +22,6 @@ class gsSystem:
         self.killRate = killRate
         self.timeStep = timeStep
 
-        self.stateArray = [copy.deepcopy(self.rxnSpace)]
-
     def renderMovie(self):
         cmd = ['ffmpeg', '-framerate', '500', '-i', os.path.join('./gsTemp', 'frame_%06d.png'),
                '-b:v', '90M', '-vcodec', 'mpeg4', os.path.join('./', 'movie.mp4')]
@@ -78,6 +76,10 @@ class gsSystem:
             print("{:.2f} %".format(i / numSteps * 100), end = '\r')
         print("Simulation complete")
 
+
+
+
+
 if __name__ == "__main__":
 
     diffRateU = 0.2
@@ -86,7 +88,7 @@ if __name__ == "__main__":
     killRate = 0.062
     timeStep = 1
 
-    sys = gsSystem("polka.png", diffRateU, diffRateV, feedRate, killRate, timeStep)
+    sys = gsSystem("Untitled.png", diffRateU, diffRateV, feedRate, killRate, timeStep)
     sys.runSim(10000)
 
     sys.renderMovie()
