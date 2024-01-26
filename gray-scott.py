@@ -102,15 +102,7 @@ if __name__ == "__main__":
     rxnRate = 1
     timeStep = 1
     photoPath = "horse.jpg"
-    '''
-    photoPath = str(sys.argv[1])
-    diffRateU = float(sys.argv[2])
-    diffRateV = float(sys.argv[3])
-    feedRate  = float(sys.argv[4])
-    killRate  = float(sys.argv[5])
-    rxnRate   = float(sys.argv[6])
-    timeStep  = float(sys.argv[7])
-    '''
+    
     sys = gsSystem(photoPath, diffRateU, diffRateV, feedRate, killRate, rxnRate, timeStep)
     sys.runSim(100000)
 
