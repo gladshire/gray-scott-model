@@ -37,9 +37,6 @@ class gsSystem:
         kernel = np.array([[0.05, 0.2, 0.05],
                            [0.2, -1.0, 0.2],
                            [0.05, 0.2, 0.05]])
-        #kernel = np.array([[0, 1, 0],
-        #                   [1, -4, 1],
-        #                   [0, 1, 0]])
         return convolve2d(cArray, kernel, mode='same', boundary='wrap')
 
     def periodicBC(self, cArray):
@@ -65,26 +62,28 @@ class gsSystem:
 
         newCU = np.clip(cU + dcU, 0.0, 1.0)
         newCV = np.clip(cV + dcV, 0.0, 1.0)
-        #newCU = cU + dcU
-        #newCV = cV + dcV
 
         self.periodicBC(newCU)
         self.periodicBC(newCV)
 
         self.rxnSpace = np.stack([newCU, newCV], axis=-1)
 
-    def runSim(self, numSteps):
+    def runSim(self, numSteps, dumpRate):
         print("Initiating simulation")
         subprocess.run(['mkdir', self.prefix])
+
+        figArray = []
         for i in range(numSteps):
             fig, ax = plt.subplots(1, 1)
             plt.gca().invert_yaxis()
             currState = self.rxnSpace[:, :, 1]
-            #ax.contourf(np.clip(self.rxnSpace[:, :, 1], 0.0, 1.0) * 255)
-            #ax.contourf(self.rxnSpace[:, :, 1] * 255)
             ax.contourf((255 * (currState - currState.min()) / (currState.max() - currState.min())),
-                       levels = 50)
-            fig.savefig(os.path.join(self.prefix, f"frame_{i:06d}.png"), dpi=300)
+                        levels = 50)
+            figArray.append(fig)
+            if len(figArray) == dumpRate:
+                for j, fig in enumerate(figArray):
+                    fig.savefig(os.path.join(self.prefix, f"frame_{i - (dumpRate - j):06d}.png"), dpi=300)
+                figArray.clear() 
             self.diffuseStep()
             plt.close(fig)
             print("{:.2f} %".format(i / numSteps * 100), end = '\r')
@@ -104,6 +103,6 @@ if __name__ == "__main__":
     photoPath = "horse.jpg"
     
     sys = gsSystem(photoPath, diffRateU, diffRateV, feedRate, killRate, rxnRate, timeStep)
-    sys.runSim(100000)
+    sys.runSim(1000, 100)
 
     sys.renderMovie()
