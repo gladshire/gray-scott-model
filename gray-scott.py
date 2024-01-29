@@ -5,9 +5,10 @@ import random
 from PIL import Image
 from scipy.signal import convolve2d
 import subprocess
-import sys
 import os
+import sys
 import time
+import gc
 
 
 
@@ -29,7 +30,7 @@ class gsSystem:
         
 
     def renderMovie(self):
-        cmd = ['ffmpeg', '-framerate', '30', '-i', os.path.join(self.prefix, 'frame_%06d.png'),
+        cmd = ['ffmpeg', '-framerate', '1000', '-i', os.path.join(self.prefix, 'frame_%06d.png'),
                '-b:v', '90M', '-vcodec', 'mpeg4', os.path.join("./", self.prefix + ".mp4")]
         subprocess.run(cmd)
 
@@ -71,19 +72,25 @@ class gsSystem:
     def runSim(self, numSteps, dumpRate):
         print("Initiating simulation")
         subprocess.run(['mkdir', self.prefix])
-
         figArray = []
         for i in range(numSteps):
             fig, ax = plt.subplots(1, 1)
+            fig.set_figheight(10)
+            fig.set_figwidth(10)
             plt.gca().invert_yaxis()
+            plt.axis('off')
             currState = self.rxnSpace[:, :, 1]
             ax.contourf((255 * (currState - currState.min()) / (currState.max() - currState.min())),
-                        levels = 50)
+                        levels = 50, cmap = 'gray')
             figArray.append(fig)
             if len(figArray) == dumpRate:
                 for j, fig in enumerate(figArray):
-                    fig.savefig(os.path.join(self.prefix, f"frame_{i - (dumpRate - j):06d}.png"), dpi=300)
-                figArray.clear() 
+                    fig.savefig(os.path.join(self.prefix, f"frame_{i - (dumpRate - j):06d}.png"),
+                                dpi=50, bbox_inches='tight')
+                    plt.close(fig)
+                figArray.clear()
+                figArray = []
+                gc.collect()
             self.diffuseStep()
             plt.close(fig)
             print("{:.2f} %".format(i / numSteps * 100), end = '\r')
@@ -94,15 +101,26 @@ class gsSystem:
 
 
 if __name__ == "__main__":
-    diffRateU = 1
-    diffRateV = 0.5
-    feedRate = 0.0545
-    killRate = 0.062
-    rxnRate = 1
-    timeStep = 1
-    photoPath = "horse.jpg"
+    if len(sys.argv) != 4:
+        print("Usage:\n  python3 gray-scott.py feedRate killRate photoPath") 
+    else:
+        diffRateU = 1
+        diffRateV = 0.5
+        #feedRate = 0.0545
+        #killRate = 0.062
+        feedRate = float(sys.argv[1])
+        killRate = float(sys.argv[2])
+        photoPath = sys.argv[3]
+        rxnRate = 1
+        timeStep = 1
     
-    sys = gsSystem(photoPath, diffRateU, diffRateV, feedRate, killRate, rxnRate, timeStep)
-    sys.runSim(1000, 100)
+        system = gsSystem(photoPath, diffRateU, diffRateV, feedRate, killRate, rxnRate, timeStep)
 
-    sys.renderMovie()
+        print("Running Gray-Scott model with:")
+        print("  feedRate: {}".format(feedRate))
+        print("  killRate: {}".format(killRate))
+        print("  initial:  {}".format(photoPath))
+
+        system.runSim(100000, 500)
+
+        system.renderMovie()
